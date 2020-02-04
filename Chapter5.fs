@@ -65,4 +65,17 @@ module GenTree =
             let tokens = TreeParser.tokenize expr
             TreeParser.parseNode string_to_data tokens
 
-    let rec size: GenTree<'a> -> int = fun (GenNode (a, l)) -> 1 + List.sumBy size l     
+    /// The size of the tree is the total number of nodes
+    let rec size: GenTree<'a> -> int = fun (GenNode (a, l)) -> 1 + List.sumBy size l
+
+
+    let private maxInt = 
+        function 
+        | [] -> 0 
+        | xs -> List.max xs
+
+    /// The height of a tree is the length of the longest branch
+    let rec height: GenTree<'a> -> int = fun (GenNode (a, l)) -> 1 + maxInt (List.map height l)
+
+    let rec set: GenTree<'a> -> Set<'a> = fun (GenNode (a, l)) -> 
+        List.fold Set.union (new Set<'a>([a])) (List.map set l)
