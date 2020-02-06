@@ -7,21 +7,20 @@ module GenTree =
 
     module private TreeParser =
         type Token = Ident of string | LeftParen | RightParen |  Comma
+        type TState = State of Token list * string
 
         let tokenize (input: string) : Token list =
-            let rec tokenizeInternal (cs: char list) (tokens: Token list) (currentIdent : string) : Token list =
-                let tokensWithAddedIdent (ident: string) = if ident.Length = 0 then tokens else Ident(ident)::tokens
-                let addTokenAndContinue token rest =
-                    tokenizeInternal rest (token::(tokensWithAddedIdent currentIdent)) ""
-                match cs, currentIdent with
-                | ','::rest, _ -> addTokenAndContinue Comma rest
-                | '('::rest, _ -> addTokenAndContinue LeftParen rest
-                | ')'::rest, _ -> addTokenAndContinue RightParen rest
-                | ' '::rest, _ -> tokenizeInternal rest tokens currentIdent
-                | c::rest, _ -> tokenizeInternal rest tokens (currentIdent + c.ToString())
-                | [], _ -> (tokensWithAddedIdent currentIdent)
+            let readChar (State (ts, ident)) (c: char) : TState =
+                let tokensWithAddedIdent ident ts = if ident = "" then ts else Ident(ident)::ts
+                match c with
+                | ',' -> State(Comma::(tokensWithAddedIdent ident ts), "")
+                | '(' -> State(LeftParen::(tokensWithAddedIdent ident ts), "")
+                | ')' -> State(RightParen::(tokensWithAddedIdent ident ts), "")
+                | ' ' -> State(ts, ident)
+                | c -> State(ts, ident + c.ToString())
             let chars = Seq.toList input
-            tokenizeInternal chars [] "" |> List.rev
+            let (State(tokens, _)) = List.fold readChar (State ([], "")) chars
+            tokens |> List.rev
 
         let rec splitOnChildren tokens parenLevel (currentChild: Token list) (childArr: (Token list) list) =
             match tokens with
@@ -43,7 +42,7 @@ module GenTree =
             | token::rest -> splitOnChildren rest parenLevel (token::currentChild) childArr
             | [] -> childArr
 
-        let rec getChildTokens (tokens: Token list) : (Token list) list =
+        let getChildTokens (tokens: Token list) : (Token list) list =
             let childrenSplit = splitOnChildren tokens 0 [] []
             childrenSplit |> List.map List.rev |> List.rev
 
@@ -58,13 +57,10 @@ module GenTree =
 
 
     let ofString : (string -> 'a) -> string -> GenTree<'a> =
-        fun string_to_data expr ->
-            let tokens = TreeParser.tokenize expr
-            TreeParser.parseNode string_to_data tokens
+        fun string_to_data -> TreeParser.tokenize >> TreeParser.parseNode string_to_data
 
     /// The size of the tree is the total number of nodes
     let rec size: GenTree<'a> -> int = fun (GenNode (a, l)) -> 1 + List.sumBy size l
-
 
     let private maxInt = 
         function 
