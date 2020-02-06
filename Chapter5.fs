@@ -9,22 +9,19 @@ module GenTree =
         type Token = Ident of string | LeftParen | RightParen |  Comma
 
         let tokenize (input: string) : Token list =
-            let rec tokenizeInternal (cs: char list) (tokens: Token list) (currentIdentO : string option) : Token list =
+            let rec tokenizeInternal (cs: char list) (tokens: Token list) (currentIdent : string) : Token list =
+                let tokensWithAddedIdent (ident: string) = if ident.Length = 0 then tokens else Ident(ident)::tokens
                 let addTokenAndContinue token rest =
-                    match currentIdentO with
-                    | None -> tokenizeInternal rest (token::tokens) None
-                    | Some(ident) -> tokenizeInternal rest (token::(Ident ident)::tokens) None
-                match cs, currentIdentO with
-                | ','::rest, _ ->  addTokenAndContinue Comma rest
+                    tokenizeInternal rest (token::(tokensWithAddedIdent currentIdent)) ""
+                match cs, currentIdent with
+                | ','::rest, _ -> addTokenAndContinue Comma rest
                 | '('::rest, _ -> addTokenAndContinue LeftParen rest
                 | ')'::rest, _ -> addTokenAndContinue RightParen rest
-                | ' '::rest, _ ->tokenizeInternal rest tokens currentIdentO
-                | c::rest, None -> tokenizeInternal rest tokens (Some (c.ToString ()) )
-                | c::rest, Some(ident) -> tokenizeInternal rest tokens (Some (ident + c.ToString()))
-                | [], None -> tokens
-                | [], Some(ident) -> (Ident ident)::tokens
+                | ' '::rest, _ -> tokenizeInternal rest tokens currentIdent
+                | c::rest, _ -> tokenizeInternal rest tokens (currentIdent + c.ToString())
+                | [], _ -> (tokensWithAddedIdent currentIdent)
             let chars = Seq.toList input
-            tokenizeInternal chars [] None |> List.rev
+            tokenizeInternal chars [] "" |> List.rev
 
         let rec splitOnChildren tokens parenLevel (currentChild: Token list) (childArr: (Token list) list) =
             match tokens with
