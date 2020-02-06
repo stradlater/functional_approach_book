@@ -1,4 +1,4 @@
-namespace FunctionalApproach.Chapter5
+﻿namespace Chapter5
 
 type GenTree<'a> = GenNode of 'a * GenTree<'a> list
 
