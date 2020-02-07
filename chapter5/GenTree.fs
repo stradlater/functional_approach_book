@@ -6,14 +6,14 @@ type GenTree<'a> = GenNode of 'a * GenTree<'a> list
 module GenTree =
 
     module private TreeParser =
-        type Token = Ident of string | LeftParen | RightParen |  Comma
+        type Token = Ident of string | LeftParen | RightParen
         type TState = State of Token list * string
 
         let tokenize (input: string) : Token list =
             let readChar (State (ts, ident)) (c: char) : TState =
                 let tokensWithAddedIdent ident ts = if ident = "" then ts else Ident(ident)::ts
                 match c with
-                | ',' -> State(Comma::(tokensWithAddedIdent ident ts), "")
+                | ',' -> State((tokensWithAddedIdent ident ts), "")
                 | '(' -> State(LeftParen::(tokensWithAddedIdent ident ts), "")
                 | ')' -> State(RightParen::(tokensWithAddedIdent ident ts), "")
                 | ' ' -> State(ts, ident)
@@ -22,39 +22,20 @@ module GenTree =
             let (State(tokens, _)) = List.fold readChar (State ([], "")) chars
             tokens |> List.rev
 
-        let rec splitOnChildren tokens parenLevel (currentChild: Token list) (childArr: (Token list) list) =
-            match tokens with
-            | Token.LeftParen::rest -> 
-                if parenLevel = 0 then
-                    splitOnChildren rest (parenLevel + 1) currentChild childArr
-                else
-                    splitOnChildren rest (parenLevel + 1) (Token.LeftParen::currentChild) childArr
-            | Token.RightParen::rest -> 
-                if parenLevel = 1 then
-                    currentChild::childArr // Last child
-                else
-                    splitOnChildren rest (parenLevel - 1) (Token.RightParen::currentChild) childArr
-            | Token.Comma::rest -> 
-                if parenLevel = 1 then
-                    splitOnChildren rest parenLevel [] (currentChild::childArr)
-                else
-                    splitOnChildren rest parenLevel (Token.Comma::currentChild) childArr
-            | token::rest -> splitOnChildren rest parenLevel (token::currentChild) childArr
-            | [] -> childArr
+        let rec parseNodes string_to_data tokens level : GenTree<'a> list =
+            match tokens, level with
+            | Ident(ident)::LeftParen::rest, 0 -> 
+                let children = parseNodes string_to_data rest 0
+                GenNode(string_to_data ident, children)::(parseNodes string_to_data (LeftParen::rest) 0)
+            | Ident(ident)::rest, 0 -> GenNode(string_to_data ident, [])::(parseNodes string_to_data rest 0)
+            | Ident(_)::rest, _ -> parseNodes string_to_data rest level
+            | LeftParen::rest, _ -> parseNodes string_to_data rest (level + 1)
+            | RightParen::_, 0 -> []
+            | RightParen::rest, _ -> parseNodes string_to_data rest (level - 1)
+            | [], _ -> []
 
-        let getChildTokens (tokens: Token list) : (Token list) list =
-            let childrenSplit = splitOnChildren tokens 0 [] []
-            childrenSplit |> List.map List.rev |> List.rev
-
-        let rec parseChildren (string_to_data : string -> 'a) (tokens: Token list) : GenTree<'a> list =
-            let childTokens = getChildTokens tokens
-            childTokens |> List.map (parseNode string_to_data)
-
-        and parseNode (string_to_data : string -> 'a) (tokens: Token list) =
-            match tokens with
-            | Ident(ident)::rest -> GenNode ((string_to_data ident), (parseChildren string_to_data rest))
-            | _ -> failwith "Unexpected token array"
-
+        let parseNode (string_to_data : string -> 'a) (tokens: Token list) =
+            List.head (parseNodes string_to_data tokens 0)
 
     let ofString : (string -> 'a) -> string -> GenTree<'a> =
         fun string_to_data -> TreeParser.tokenize >> TreeParser.parseNode string_to_data
