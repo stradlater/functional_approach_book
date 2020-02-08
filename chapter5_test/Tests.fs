@@ -40,3 +40,19 @@ let ``Test ofString 3`` () =
     let gentree = GenTree.ofString id treeExpr
     
     Assert.Equal(11, GenTree.size gentree)
+
+
+[<Fact>]
+let ``Test ofString 4`` () =
+    let treeExpr = "ash(bas,d(a,b,c),d(asd,dsdsd,asd(lk(asd(asd)),df,df)),e(f,g(h)))"
+    let gentree = GenTree.ofString id treeExpr
+    let str = GenTree.toString id gentree
+    Assert.Equal(treeExpr, str)
+
+    
+[<Fact>]
+let ``Test ofString 5`` () =
+    let treeExpr = "ash"
+    let gentree = GenTree.ofString id treeExpr
+    let str = GenTree.toString id gentree
+    Assert.Equal(treeExpr, str)

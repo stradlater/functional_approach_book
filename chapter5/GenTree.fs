@@ -19,8 +19,11 @@ module GenTree =
                 | ' ' -> State(ts, ident)
                 | c -> State(ts, ident + c.ToString())
             let chars = Seq.toList input
-            let (State(tokens, _)) = List.fold readChar (State ([], "")) chars
-            tokens |> List.rev
+            let (State(tokens, ident)) = List.fold readChar (State ([], "")) chars
+            if ident <> "" then
+                Ident(ident)::(List.rev tokens)
+            else
+                tokens |> List.rev 
 
         let rec parseNodes string_to_data tokens level : GenTree<'a> list =
             match tokens, level with
@@ -39,6 +42,12 @@ module GenTree =
 
     let ofString : (string -> 'a) -> string -> GenTree<'a> =
         fun string_to_data -> TreeParser.tokenize >> TreeParser.parseNode string_to_data
+
+    let rec toString (dataToString:'a -> string) (GenNode(a, nodes): GenTree<'a>): string =
+        (dataToString a) +
+            match nodes with
+            | [] -> ""
+            | c::cs -> "(" + (List.fold (fun str child -> str + "," + (toString dataToString child)) (toString dataToString c) cs) + ")"
 
     /// The size of the tree is the total number of nodes
     let rec size: GenTree<'a> -> int = fun (GenNode (a, l)) -> 1 + List.sumBy size l
