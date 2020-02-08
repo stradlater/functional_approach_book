@@ -56,3 +56,39 @@ let ``Test ofString 5`` () =
     let gentree = GenTree.ofString id treeExpr
     let str = GenTree.toString id gentree
     Assert.Equal(treeExpr, str)
+
+
+[<Fact>]
+let ``Test flat`` () =
+    let treeExpr = "a(b,c(d,e),f)"
+    let gentree = GenTree.ofString id treeExpr
+    let flist = GenTree.flat gentree
+    let flatString = List.fold (+) "" flist
+    Assert.Equal("abcdef", flatString)
+
+
+
+[<Fact>]
+let ``Test at`` () =
+    let treeExpr = "a(b,c(d,e),f)"
+    let gentree = GenTree.ofString id treeExpr
+    Assert.Equal(treeExpr, (GenTree.at gentree []) |> (GenTree.toString id))
+
+    Assert.Equal("b", (GenTree.at gentree [0]) |> (GenTree.toString id))
+    Assert.Equal("c(d,e)", (GenTree.at gentree [1]) |> (GenTree.toString id))
+    Assert.Equal("f", (GenTree.at gentree [2]) |> (GenTree.toString id))
+    Assert.Equal("d", (GenTree.at gentree [1; 0]) |> (GenTree.toString id))
+    Assert.Equal("e", (GenTree.at gentree [1; 1]) |> (GenTree.toString id))
+
+
+[<Fact>]
+let ``Test replace`` () =
+    let treeExpr = "a(b,c(d,e),f)"
+    let gentree = GenTree.ofString id treeExpr
+
+    let repExpr = "foo(a,b,c)"
+    let repTree = GenTree.ofString id repExpr
+
+    Assert.Equal(repExpr, (GenTree.replaceOcc [] repTree gentree) |> (GenTree.toString id))
+    Assert.Equal("a(foo(a,b,c),c(d,e),f)", (GenTree.replaceOcc [0] repTree gentree) |> (GenTree.toString id))
+    Assert.Equal("a(b,c(d,foo(a,b,c)),f)", (GenTree.replaceOcc [1;1] repTree gentree) |> (GenTree.toString id))

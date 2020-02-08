@@ -62,3 +62,25 @@ module GenTree =
 
     let rec set: GenTree<'a> -> Set<'a> = fun (GenNode (a, l)) -> 
         List.fold Set.union (new Set<'a>([a])) (List.map set l)
+
+    /// Returns the list of nodes in a depth-first, prefix, lefmost traversal
+    let rec flat: GenTree<'a> -> 'a list =
+        fun (GenNode (x, cs)) -> x::(List.fold (fun s t -> s @ (flat t)) [] cs)
+
+
+    /// get subtree at the given 0-indexed occurrence
+    let rec at (GenNode (x, ts) as t) = 
+        function
+        | [] -> t
+        | i::occ -> at (List.item i ts) occ
+
+    let private mapAtInd xs ind f =
+        List.mapi (fun i x -> if i = ind then (f x) else x) xs   
+
+    // replace subtree at the given 0-indexed occurrence
+    let rec replaceOcc occ newT (GenNode (x, ts)) =
+        match occ with
+        | [] -> newT
+        | i::occ2 -> GenNode (x, mapAtInd ts i (replaceOcc occ2 newT) )
+
+        
