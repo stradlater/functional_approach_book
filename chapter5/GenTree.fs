@@ -49,9 +49,6 @@ module GenTree =
             | [] -> ""
             | c::cs -> "(" + (List.fold (fun str child -> str + "," + (toString dataToString child)) (toString dataToString c) cs) + ")"
 
-    /// The size of the tree is the total number of nodes
-    let rec size: GenTree<'a> -> int = fun (GenNode (a, l)) -> 1 + List.sumBy size l
-
     let private maxInt = 
         function 
         | [] -> 0 
@@ -83,4 +80,15 @@ module GenTree =
         | [] -> newT
         | i::occ2 -> GenNode (x, mapAtInd ts i (replaceOcc occ2 newT) )
 
-        
+
+    let rec hom f =
+        fun (GenNode (x, xs)) -> f x (List.map (hom f) xs)
+
+
+    let rec trav h g x (GenNode (d, ns)) =
+        h d (List.foldBack (g << (trav h g x) ) ns x)
+
+    /// The size of the tree is the total number of nodes
+    let size t = 
+        trav (fun _ y -> 1 + y) (+) 0 t
+
