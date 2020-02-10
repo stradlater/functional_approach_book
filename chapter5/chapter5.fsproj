@@ -4,5 +4,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="GenTree.fs" />
+    <Compile Include="Term.fs" />
   </ItemGroup>
 </Project>

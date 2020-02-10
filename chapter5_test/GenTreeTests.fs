@@ -36,11 +36,8 @@ let ``Test ofString 2`` () =
 [<Fact>]
 let ``Test ofString 3`` () =
     let treeExpr = "ash(bas, d(a,b,c), d, e(f, g(h)))"
-
     let gentree = GenTree.ofString id treeExpr
-    
     Assert.Equal(11, GenTree.size gentree)
-
 
 [<Fact>]
 let ``Test ofString 4`` () =
@@ -48,7 +45,6 @@ let ``Test ofString 4`` () =
     let gentree = GenTree.ofString id treeExpr
     let str = GenTree.toString id gentree
     Assert.Equal(treeExpr, str)
-
     
 [<Fact>]
 let ``Test ofString 5`` () =
@@ -56,7 +52,6 @@ let ``Test ofString 5`` () =
     let gentree = GenTree.ofString id treeExpr
     let str = GenTree.toString id gentree
     Assert.Equal(treeExpr, str)
-
 
 [<Fact>]
 let ``Test flat`` () =
