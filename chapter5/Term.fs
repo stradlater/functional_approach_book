@@ -44,4 +44,22 @@ module Term =
         let vs = vars t
         Set.contains v vs
 
+
+type Substitution<'a, 'b> when 'b : comparison = Map<'b, Term<'a, 'b>>
+
+module Substitution =
+
+    let toString (subst : Substitution<string, string>) =
+        subst 
+        |> Map.toList
+        |> List.map (fun (a, term) -> a + "  -->  " + (Term.toString term))
+        |> List.reduce (fun a b -> a + System.Environment.NewLine + b)
+
+    /// Apply a substitution to a term
+    let rec apply subst =
+        function
+        | Term(f, tl) -> Term(f, List.map (apply subst) tl)
+        | Var(x) as v -> Map.tryFind x subst |> Option.defaultValue v
         
+
+

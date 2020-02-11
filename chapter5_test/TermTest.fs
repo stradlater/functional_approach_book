@@ -25,3 +25,9 @@ let ``Test vars`` () =
     let vars = Term.vars term
     let expectedVars = Set.ofList(["c";"d"])
     Assert.True( (Set.isSubset vars expectedVars) && (Set.isSubset expectedVars vars))
+
+[<Fact>]
+let ``Test Substitution`` () =
+    let subst = Map.ofList [("x", Term.ofString "g(z)")]
+    let substResult = Substitution.apply subst (Term.ofString "f(x,y,z)")
+    Assert.Equal("f(g(z),y,z)", Term.toString substResult)
