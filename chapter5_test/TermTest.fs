@@ -31,3 +31,13 @@ let ``Test Substitution`` () =
     let subst = Map.ofList [("x", Term.ofString "g(z)")]
     let substResult = Substitution.apply subst (Term.ofString "f(x,y,z)")
     Assert.Equal("f(g(z),y,z)", Term.toString substResult)
+
+
+[<Fact>]
+let ``Test Compose substitutions`` () =
+    let subst1 = Map.ofList [("x", Term.ofString "g(x,y)")]
+    let subst2 = Map.ofList [("y", Term.ofString "h(x,z)")]
+    let composed = Substitution.compose subst1 subst2
+    let strComp = Substitution.toString composed
+
+    Assert.Equal("x  -->  g(x,y)\r\ny  -->  h(g(x,y),z)", strComp)

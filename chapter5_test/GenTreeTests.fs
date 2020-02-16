@@ -1,4 +1,4 @@
-module Tests
+module GenTreeTests
 
 open System
 open Xunit

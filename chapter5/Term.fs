@@ -61,5 +61,11 @@ module Substitution =
         | Term(f, tl) -> Term(f, List.map (apply subst) tl)
         | Var(x) as v -> Map.tryFind x subst |> Option.defaultValue v
         
+    let compose subst1 subst2 =
+        let subst1AppliedToSubst2 = (Map.map (fun _ t -> (apply subst1 t)) subst2)
+        let subst1NotInSubst2 = Map.filter (fun k _ -> not (Map.containsKey k subst2) ) subst1
+        Map( Seq.concat [Map.toSeq subst1AppliedToSubst2; Map.toSeq subst1NotInSubst2 ])
+        
+        
 
 
