@@ -63,8 +63,58 @@ module Substitution =
         
     let compose subst1 subst2 =
         let subst1AppliedToSubst2 = (Map.map (fun _ t -> (apply subst1 t)) subst2)
-        let subst1NotInSubst2 = Map.filter (fun k _ -> not (Map.containsKey k subst2) ) subst1
-        Map( Seq.concat [Map.toSeq subst1AppliedToSubst2; Map.toSeq subst1NotInSubst2 ])
+        //let subst1NotInSubst2 = Map.filter (fun k _ -> not (Map.containsKey k subst2) ) subst1
+        Map.fold (fun s k t -> Map.add k t s) subst1 subst1AppliedToSubst2
+
+    let addSubst (substs : Substitution<'a, 'b>) newSubsts =
+        List.fold (fun s (v, t) -> 
+            if Map.containsKey v s then
+                let t0 = Map.find v s
+                if t0 <> t then
+                    failwithf "Different substitution of same var already added"
+                else
+                    s                
+            else
+                Map.add v t s
+        ) substs newSubsts
+
+    /// Produce a substitution that matches t1 with t2
+    let matchTerms term1 term2 =
+        let rec matchRec t1 t2 subst =
+            match t1, t2 with
+            | Var(v), t -> addSubst subst [(v, t)]
+            | t, Var(_) -> failwithf "No match - term-var"
+            | Term(id1, children1), Term(id2, children2) ->
+                if id1 = id2 && (List.length children1) = (List.length children2) then
+                    List.fold (fun s (t1, t2) -> matchRec t1 t2 s) subst (List.zip children1 children2)
+                else
+                    failwithf "No match - term error"
+        matchRec term1 term2 Map.empty
+
+    let rec unify t1 t2 =
+        match t1, t2 with    
+        | (Var v, t) -> 
+            if (Var v) = t then 
+                Map.empty
+            else if Term.occurs v t then
+                failwithf "var occurs in term"
+            else
+                Map.ofList [(v, t)]
+        | (t, Var v) -> 
+            if Term.occurs v t then
+                failwithf "var occurs in term"
+            else
+                Map.ofList [(v, t)]
+        | (Term(op1, children1), Term(op2, children2)) ->
+            if op1 = op2 then
+                let substUnif s (term1, term2) =
+                    compose (unify (apply s term1) (apply s term2)) s
+                List.fold substUnif Map.empty (List.zip children1 children2)                
+            else
+                failwithf "different ops"
+
+
+
         
         
 

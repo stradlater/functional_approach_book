@@ -39,5 +39,20 @@ let ``Test Compose substitutions`` () =
     let subst2 = Map.ofList [("y", Term.ofString "h(x,z)")]
     let composed = Substitution.compose subst1 subst2
     let strComp = Substitution.toString composed
-
     Assert.Equal("x  -->  g(x,y)\r\ny  -->  h(g(x,y),z)", strComp)
+    
+[<Fact>]
+let ``Test Compose substitutions 2`` () =
+    let subst1 = Map.ofList [("x", Term.ofString "g(x,y)")]
+    let subst2 = Map.ofList [("y", Term.ofString "h(x,z)"); ("x", Term.ofString "k(x)")]
+    let composed = Substitution.compose subst1 subst2
+    let strComp = Substitution.toString composed
+    Assert.Equal("x  -->  k(g(x,y))\r\ny  -->  h(g(x,y),z)", strComp)
+
+[<Fact>]
+let ``Test unify`` () =
+    let t1 = Term.ofString("f(x,h(y))")
+    let t2 = Term.ofString("f(k(z),z)")
+    let s = Substitution.unify t1 t2
+    let str = Substitution.toString s
+    Assert.Equal("x  -->  k(h(y))\r\nz  -->  h(y)", str)
